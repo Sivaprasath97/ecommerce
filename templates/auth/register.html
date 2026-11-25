@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Create Account{% endblock %}
+{% block content %}
+<div class="container py-4 py-md-5">
+  <div class="surface auth-card">
+    <div class="auth-side">
+      <h3>Looks like you're new here!</h3>
+      <p>Sign up to start shopping, track your orders and check out faster.</p>
+      <i class="bi bi-person-plus-fill big-ic"></i>
+    </div>
+    <div class="p-4 p-md-5">
+      <form method="post">
+        {{ csrf_field() }}
+        <div class="form-floating mb-3"><input name="name" id="name" class="form-control" placeholder="Name" required value="{{ form.name }}"><label for="name">Full name</label></div>
+        <div class="form-floating mb-3"><input type="email" name="email" id="email" class="form-control" placeholder="Email" required value="{{ form.email }}"><label for="email">Email address</label></div>
+        <div class="row g-2 mb-3">
+          <div class="col-sm"><div class="form-floating"><input type="password" name="password" id="pw" class="form-control" placeholder="Password" minlength="6" required><label for="pw">Password</label></div></div>
+          <div class="col-sm"><div class="form-floating"><input type="password" name="confirm" id="pw2" class="form-control" placeholder="Confirm" minlength="6" required><label for="pw2">Confirm password</label></div></div>
+        </div>
+        <button class="btn btn-accent btn-xl w-100">Continue</button>
+      </form>
+      <div class="text-center mt-4"><a href="{{ url_for('auth.login') }}" class="fw-semibold">Existing user? Log in</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

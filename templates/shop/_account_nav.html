@@ -1,0 +1,13 @@
+<div class="surface acct-side mb-3">
+  <div class="hello border-bottom">
+    <div class="avatar">{{ g.user.name[:1]|upper }}</div>
+    <div class="min-vw-0"><div class="small text-muted">Hello,</div><div class="fw-800 text-truncate">{{ g.user.name }}</div></div>
+  </div>
+  <nav class="nav flex-column py-2">
+    <a class="nav-link {{ 'active' if request.endpoint == 'shop.dashboard' }}" href="{{ url_for('shop.dashboard') }}"><i class="bi bi-person"></i> Profile &amp; overview</a>
+    <a class="nav-link {{ 'active' if request.endpoint in ('shop.orders', 'shop.order_detail') }}" href="{{ url_for('shop.orders') }}"><i class="bi bi-box-seam"></i> My orders</a>
+    <a class="nav-link" href="{{ url_for('shop.cart') }}"><i class="bi bi-cart3"></i> My cart</a>
+    <form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}
+      <button class="nav-link border-0 bg-transparent w-100 text-start text-danger"><i class="bi bi-power"></i> Logout</button></form>
+  </nav>
+</div>

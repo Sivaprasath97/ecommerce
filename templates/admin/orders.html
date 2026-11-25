@@ -1,0 +1,33 @@
+{% extends "admin/base.html" %}
+{% from "_macros.html" import status_badge, pagination with context %}
+{% block title %}Orders{% endblock %}
+{% block content %}
+<h4 class="mb-3">Orders <span class="text-muted fs-6">({{ pager.total }})</span></h4>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-sm-6"><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Order #, customer name or email"></div>
+  <div class="col-sm-4"><select name="status" class="form-select form-select-sm text-capitalize" onchange="this.form.submit()">
+    <option value="">All statuses</option>
+    {% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if status == s }}>{{ s }}</option>{% endfor %}
+  </select></div>
+  <div class="col-sm-2"><button class="btn btn-sm btn-outline-secondary w-100">Filter</button></div>
+</form>
+<div class="card border-0 shadow-sm"><div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Order</th><th>Customer</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th></th></tr></thead>
+    <tbody>
+    {% for o in orders %}
+    <tr>
+      <td class="fw-semibold">{{ o.order_number }}</td>
+      <td>{{ o.user_name }}<div class="small text-muted">{{ o.user_email }}</div></td>
+      <td>{{ o['items']|sum(attribute='qty') }}</td>
+      <td>{{ o.total|money }}</td>
+      <td>{{ status_badge(o.status) }}</td>
+      <td class="small text-muted">{{ o.created_at|dt }}</td>
+      <td class="text-end"><a href="{{ url_for('admin.order_detail', order_id=o._id) }}" class="btn btn-sm btn-outline-secondary">Manage</a></td>
+    </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-muted py-4">No orders found.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{{ pagination(pager, 'admin.orders') }}
+{% endblock %}

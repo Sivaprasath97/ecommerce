@@ -1,0 +1,17 @@
+<div class="price-details">
+  <h6>Price details</h6>
+  <div class="pt-2">
+    {% if totals.mrp_total is defined and totals.savings > 0 %}
+    <div class="row-item"><span>Price ({{ item_count or '' }} item{{ 's' if item_count != 1 }})</span><span>{{ totals.mrp_total|money }}</span></div>
+    <div class="row-item"><span>Discount</span><span class="text-success">&minus; {{ totals.savings|money }}</span></div>
+    {% else %}
+    <div class="row-item"><span>Subtotal</span><span>{{ totals.subtotal|money }}</span></div>
+    {% endif %}
+    <div class="row-item"><span>Delivery charges</span><span>{% if totals.shipping == 0 %}<span class="text-success fw-semibold">FREE</span>{% else %}{{ totals.shipping|money }}{% endif %}</span></div>
+    <div class="row-item"><span>Tax{% if settings.tax_rate %} ({{ settings.tax_rate }}%){% endif %}</span><span>{{ totals.tax|money }}</span></div>
+    <div class="row-item total"><span>Total amount</span><span>{{ totals.total|money }}</span></div>
+    {% if totals.savings is defined and totals.savings > 0 %}
+    <div class="save">You will save {{ totals.savings|money }} on this order</div>
+    {% else %}<div class="pb-2"></div>{% endif %}
+  </div>
+</div>

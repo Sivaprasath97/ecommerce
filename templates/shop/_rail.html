@@ -1,0 +1,17 @@
+{# expects: rail_items, rail_title, rail_sub (optional), rail_link, rail_head_class (optional) #}
+<section class="shelf">
+  <div class="shelf-head {{ rail_head_class or '' }}">
+    <div>
+      <h5>{{ rail_title }}</h5>
+      {% if rail_sub %}<div class="sub">{{ rail_sub|safe }}</div>{% endif %}
+    </div>
+    <a href="{{ rail_link }}" class="view-all" title="View all"><i class="bi bi-chevron-right"></i></a>
+  </div>
+  <div class="rail-wrap">
+    <button class="rail-btn prev d-none d-md-grid" aria-label="Previous"><i class="bi bi-chevron-left"></i></button>
+    <div class="rail">
+      {% for p in rail_items %}{% include "shop/_product_card.html" %}{% endfor %}
+    </div>
+    <button class="rail-btn next d-none d-md-grid" aria-label="Next"><i class="bi bi-chevron-right"></i></button>
+  </div>
+</section>

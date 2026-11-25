@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}My Account{% endblock %}
+{% block content %}
+{% set addr = g.user.address or {} %}
+<div class="container pt-3">
+  <div class="row g-3">
+    <div class="col-lg-3">{% include "shop/_account_nav.html" %}</div>
+    <div class="col-lg-9">
+      <div class="row g-3 mb-3">
+        {% for label, value, icon in [('Total orders', stats.orders, 'bag-check'), ('Total spent', stats.spent|money, 'wallet2'), ('In progress', stats.active, 'truck'), ('Delivered', stats.delivered, 'check2-circle')] %}
+        <div class="col-6 col-xl-3"><div class="surface stat-card h-100">
+          <div class="stat-icon"><i class="bi bi-{{ icon }}"></i></div>
+          <div><div class="small text-muted">{{ label }}</div><div class="fs-5 fw-800">{{ value }}</div></div>
+        </div></div>
+        {% endfor %}
+      </div>
+
+      <div class="surface mb-3">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+          <h2 class="h6 fw-800 mb-0">Recent orders</h2><a href="{{ url_for('shop.orders') }}" class="small fw-semibold">View all</a></div>
+        {% for o in recent %}
+        <a href="{{ url_for('shop.order_detail', order_id=o._id) }}" class="order-card">
+          <div class="thumbs d-flex">{% for it in o['items'][:3] %}<img src="{{ it.image_url }}" alt="">{% endfor %}</div>
+          <div class="flex-grow-1 min-vw-0"><div class="fw-semibold text-truncate">{{ o['items'][0].name }}{% if o['items']|length > 1 %} + {{ o['items']|length - 1 }} more{% endif %}</div>
+            <div class="small text-muted">{{ o.order_number }} &middot; {{ o.created_at|dt }}</div></div>
+          <div class="fw-800 d-none d-sm-block">{{ o.total|money }}</div>
+          <div>{{ status_badge(o.status) }}</div>
+        </a>
+        {% else %}
+        <div class="p-4 text-muted">No orders yet. <a href="{{ url_for('shop.products') }}">Start shopping</a></div>
+        {% endfor %}
+      </div>
+
+      <div class="row g-3">
+        <div class="col-xl-7">
+          <div class="surface p-4 h-100">
+            <h2 class="h6 fw-800 mb-3">Personal information &amp; address</h2>
+            <form method="post" action="{{ url_for('shop.update_profile') }}" class="row g-2">
+              {{ csrf_field() }}
+              <div class="col-md-6"><label class="form-label small">Name</label><input name="name" class="form-control" value="{{ g.user.name }}" required></div>
+              <div class="col-md-6"><label class="form-label small">Mobile</label><input name="phone" class="form-control" value="{{ g.user.phone }}"></div>
+              <div class="col-12"><label class="form-label small">Email</label><input class="form-control" value="{{ g.user.email }}" disabled></div>
+              <div class="col-12"><label class="form-label small">Address</label><input name="line1" class="form-control" value="{{ addr.line1 }}"></div>
+              <div class="col-12"><label class="form-label small">Locality / landmark</label><input name="line2" class="form-control" value="{{ addr.line2 }}"></div>
+              <div class="col-md-6"><label class="form-label small">City</label><input name="city" class="form-control" value="{{ addr.city }}"></div>
+              <div class="col-md-6"><label class="form-label small">State</label><input name="state" class="form-control" value="{{ addr.state }}"></div>
+              <div class="col-md-6"><label class="form-label small">PIN / ZIP</label><input name="zip" class="form-control" value="{{ addr.zip }}"></div>
+              <div class="col-md-6"><label class="form-label small">Country</label><input name="country" class="form-control" value="{{ addr.country }}"></div>
+              <div class="col-12 mt-3"><button class="btn btn-brand px-4">Save changes</button></div>
+            </form>
+          </div>
+        </div>
+        <div class="col-xl-5">
+          <div class="surface p-4 h-100">
+            <h2 class="h6 fw-800 mb-3">Change password</h2>
+            <form method="post" action="{{ url_for('shop.change_password') }}" class="d-grid gap-2">
+              {{ csrf_field() }}
+              <input type="password" name="current" class="form-control" placeholder="Current password" required>
+              <input type="password" name="new" class="form-control" placeholder="New password" minlength="6" required>
+              <input type="password" name="confirm" class="form-control" placeholder="Confirm new password" minlength="6" required>
+              <button class="btn btn-outline-brand mt-2">Update password</button>
+            </form>
+            <p class="small text-muted mt-3 mb-0">Member since {{ g.user.created_at|dt('%B %Y') }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

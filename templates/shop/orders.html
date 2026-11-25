@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge, pagination with context %}
+{% block title %}My Orders{% endblock %}
+{% block content %}
+<div class="container pt-3">
+  <div class="row g-3">
+    <div class="col-lg-3">{% include "shop/_account_nav.html" %}</div>
+    <div class="col-lg-9">
+      <div class="surface">
+        <div class="px-4 py-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <h1 class="h5 fw-800 mb-0">My Orders</h1>
+          <div class="d-flex flex-wrap gap-1">
+            <a href="{{ url_for('shop.orders') }}" class="chip {{ '' if not status else 'bg-light text-body' }}">All</a>
+            {% for s in ORDER_STATUSES %}<a href="{{ url_for('shop.orders', status=s) }}" class="chip text-capitalize {{ '' if status == s else 'bg-light text-body' }}">{{ s }}</a>{% endfor %}
+          </div>
+        </div>
+        {% for o in orders %}
+        <a href="{{ url_for('shop.order_detail', order_id=o._id) }}" class="order-card">
+          <div class="thumbs d-flex">{% for it in o['items'][:3] %}<img src="{{ it.image_url }}" alt="">{% endfor %}</div>
+          <div class="flex-grow-1 min-vw-0">
+            <div class="fw-semibold text-truncate">{{ o['items'][0].name }}{% if o['items']|length > 1 %} + {{ o['items']|length - 1 }} more{% endif %}</div>
+            <div class="small text-muted">Order {{ o.order_number }} &middot; {{ o['items']|sum(attribute='qty') }} item(s)</div>
+          </div>
+          <div class="fw-800 d-none d-sm-block" style="width:110px">{{ o.total|money }}</div>
+          <div class="text-end" style="min-width:150px">
+            {{ status_badge(o.status) }}
+            <div class="small text-muted mt-1">{{ 'Placed' if o.status == 'pending' else 'Updated' }} {{ (o.updated_at or o.created_at)|dt('%d %b %Y') }}</div>
+          </div>
+        </a>
+        {% else %}
+        <div class="text-center py-5">
+          <i class="bi bi-box-seam" style="font-size:3.5rem;color:var(--brand)"></i>
+          <h5 class="fw-800 mt-2">No orders {{ 'with this status' if status else 'yet' }}</h5>
+          <a href="{{ url_for('shop.products') }}" class="btn btn-brand mt-2">Start shopping</a>
+        </div>
+        {% endfor %}
+      </div>
+      {{ pagination(pager, 'shop.orders') }}
+    </div>
+  </div>
+</div>
+{% endblock %}

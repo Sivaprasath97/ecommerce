@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "_macros.html" import pagination with context %}
+{% block title %}{{ category.name if category else ('Search: ' ~ q if q else 'All Products') }}{% endblock %}
+{% macro furl() -%}
+{%- set a = request.args.to_dict() -%}{%- set _ = a.pop('page', None) -%}{%- set _ = a.update(kwargs) -%}
+{%- for k in a.keys()|list %}{% if a[k] in (None, '', 0) %}{% set _ = a.pop(k) %}{% endif %}{% endfor -%}
+{{ url_for('shop.products', **a) }}
+{%- endmacro %}
+{% block content %}
+<div class="container pt-3">
+  <nav class="small mb-2 text-muted"><a href="{{ url_for('shop.home') }}">Home</a> <i class="bi bi-chevron-right small"></i>
+    {% if category %}<a href="{{ url_for('shop.products') }}">Products</a> <i class="bi bi-chevron-right small"></i> {{ category.name }}{% else %}Products{% endif %}</nav>
+
+  <div class="row g-3">
+    {# ---------- filters ---------- #}
+    <aside class="col-lg-3">
+      <button class="btn btn-light w-100 d-lg-none mb-2 shadow-sm" data-bs-toggle="collapse" data-bs-target="#filters"><i class="bi bi-funnel"></i> Filters</button>
+      <div id="filters" class="collapse d-lg-block">
+        <div class="surface filters">
+          <div class="fsec d-flex justify-content-between align-items-center">
+            <span class="fw-800 fs-6">Filters</span>
+            {% if request.args.get('min') or request.args.get('max') or min_discount or in_stock %}
+            <a href="{{ url_for('shop.products', category=category.slug if category else None, q=q or None) }}" class="small fw-semibold">Clear all</a>{% endif %}
+          </div>
+          <div class="fsec">
+            <h6>Categories</h6>
+            <a class="flink {{ 'active' if not category }}" href="{{ furl(category=None) }}">All categories</a>
+            {% for c in nav_categories %}<a class="flink {{ 'active' if category and category.slug == c.slug }}" href="{{ furl(category=c.slug) }}"><i class="bi bi-{{ c.icon or 'grid' }} me-1"></i> {{ c.name }}</a>{% endfor %}
+          </div>
+          <form class="fsec" method="get">
+            {% for k in ['q', 'category', 'sort', 'discount', 'in_stock'] %}{% if request.args.get(k) %}<input type="hidden" name="{{ k }}" value="{{ request.args.get(k) }}">{% endif %}{% endfor %}
+            <h6>Price</h6>
+            <div class="d-flex gap-2 align-items-center">
+              <input type="number" min="0" step="1" name="min" value="{{ request.args.get('min', '') }}" class="form-control form-control-sm" placeholder="Min">
+              <span class="text-muted">to</span>
+              <input type="number" min="0" step="1" name="max" value="{{ request.args.get('max', '') }}" class="form-control form-control-sm" placeholder="Max">
+            </div>
+            <button class="btn btn-brand btn-sm w-100 mt-2">Apply</button>
+          </form>
+          <div class="fsec">
+            <h6>Discount</h6>
+            {% for d in discount_steps %}
+            <div class="form-check"><input class="form-check-input" type="radio" id="d{{ d }}" {{ 'checked' if min_discount == d }} onclick="location.href='{{ furl(discount=(None if min_discount == d else d)) }}'">
+              <label class="form-check-label" for="d{{ d }}">{{ d }}% or more</label></div>
+            {% endfor %}
+          </div>
+          <div class="fsec">
+            <h6>Availability</h6>
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="stk" {{ 'checked' if in_stock }} onchange="location.href='{{ furl(in_stock=(None if in_stock else '1')) }}'">
+              <label class="form-check-label" for="stk">Exclude out of stock</label></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    {# ---------- results ---------- #}
+    <section class="col-lg-9">
+      <div class="surface mb-3">
+        <div class="px-3 pt-3">
+          <h1 class="h5 fw-800 mb-1">{% if q %}Results for "{{ q }}"{% elif category %}{{ category.name }}{% else %}All Products{% endif %}</h1>
+          <div class="small text-muted mb-2">Showing {{ (pager.skip + 1) if pager.total else 0 }}–{{ pager.skip + products|length }} of {{ pager.total }} products</div>
+          {% if category and category.description %}<p class="small text-muted mb-2">{{ category.description }}</p>{% endif %}
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            {% if q %}<a class="chip" href="{{ furl(q=None) }}">"{{ q }}" <i class="bi bi-x"></i></a>{% endif %}
+            {% if min_price or max_price %}<a class="chip" href="{{ furl(min=None, max=None) }}">{{ min_price|money if min_price else 'Any' }} – {{ max_price|money if max_price else 'Any' }} <i class="bi bi-x"></i></a>{% endif %}
+            {% if min_discount %}<a class="chip" href="{{ furl(discount=None) }}">{{ min_discount }}%+ off <i class="bi bi-x"></i></a>{% endif %}
+            {% if in_stock %}<a class="chip" href="{{ furl(in_stock=None) }}">In stock <i class="bi bi-x"></i></a>{% endif %}
+          </div>
+        </div>
+        <div class="sortbar">
+          <span class="fw-semibold">Sort by</span>
+          {% for key, label in sort_labels %}<a href="{{ furl(sort=key) }}" class="{{ 'active' if sort == key }}">{{ label }}</a>{% endfor %}
+        </div>
+      </div>
+
+      {% if products %}
+      <div class="row g-3 row-cols-2 row-cols-md-3 row-cols-xl-4 grid-tiles">
+        {% for p in products %}<div class="col">{% include "shop/_product_card.html" %}</div>{% endfor %}
+      </div>
+      {{ pagination(pager, 'shop.products') }}
+      {% else %}
+      <div class="surface text-center py-5 px-3">
+        <i class="bi bi-search fs-1 text-muted"></i>
+        <h5 class="mt-3 fw-800">Sorry, no results found!</h5>
+        <p class="text-muted">Please check the spelling or try searching for something else.</p>
+        <a href="{{ url_for('shop.products') }}" class="btn btn-brand">Browse all products</a>
+      </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

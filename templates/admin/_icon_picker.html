@@ -1,0 +1,7 @@
+<label class="form-label small">Icon (shown in store category bar)</label>
+<div class="d-flex flex-wrap gap-1 mb-3">
+  {% for ic in icon_choices %}
+  <input type="radio" class="btn-check" name="icon" id="ic-{{ ic }}" value="{{ ic }}" {{ 'checked' if ic == current_icon }}>
+  <label class="btn btn-outline-secondary btn-sm" for="ic-{{ ic }}" title="{{ ic }}"><i class="bi bi-{{ ic }}"></i></label>
+  {% endfor %}
+</div>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Shopping Cart{% endblock %}
+{% block content %}
+<div class="container pt-3">
+  {% if lines %}
+  {% set item_count = lines|sum(attribute='qty') %}
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="surface">
+        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+          <h1 class="h5 fw-800 mb-0">My Cart ({{ item_count }})</h1>
+          {% if g.user.address and g.user.address.zip %}<span class="small text-muted"><i class="bi bi-geo-alt"></i> Deliver to <b>{{ g.user.address.city }} {{ g.user.address.zip }}</b></span>{% endif %}
+        </div>
+        {% for l in lines %}
+        {% set p = l.product %}{% set off = discount_pct(p) %}
+        <div class="cart-item">
+          <div class="text-center">
+            <a href="{{ url_for('shop.product_detail', slug=p.slug) }}" class="thumb d-block"><img src="{{ p.image_url }}" alt=""></a>
+            <form method="post" action="{{ url_for('shop.cart_update') }}" class="mt-2">
+              {{ csrf_field() }}<input type="hidden" name="product_id" value="{{ p._id }}">
+              <div class="qty-stepper">
+                <button data-step="-1" type="button" aria-label="Decrease"><i class="bi bi-dash"></i></button>
+                <input type="number" name="qty" value="{{ l.qty }}" min="1" max="{{ p.stock }}" onchange="this.form.submit()" aria-label="Quantity">
+                <button data-step="1" type="button" aria-label="Increase"><i class="bi bi-plus"></i></button>
+              </div>
+            </form>
+          </div>
+          <div class="flex-grow-1 min-vw-0">
+            <a href="{{ url_for('shop.product_detail', slug=p.slug) }}" class="fw-semibold text-body d-block mb-1">{{ p.name }}</a>
+            <div class="price-row mt-0">
+              <span class="price">{{ l.subtotal|money }}</span>
+              {% if off %}<span class="mrp">{{ (p.mrp * l.qty)|money }}</span><span class="off">{{ off }}% off</span>{% endif %}
+            </div>
+            <div class="small text-muted">{{ p.price|money }} each</div>
+            {% if not l.available %}<div class="small text-danger fw-semibold mt-1"><i class="bi bi-exclamation-triangle"></i> Only {{ p.stock }} available — please reduce quantity</div>
+            {% elif p.stock <= 5 %}<div class="low-stock mt-1">Only {{ p.stock }} left in stock</div>{% endif %}
+            <form method="post" action="{{ url_for('shop.cart_remove') }}" class="mt-2">
+              {{ csrf_field() }}<input type="hidden" name="product_id" value="{{ p._id }}">
+              <button class="btn btn-sm btn-link text-body fw-bold text-uppercase p-0 small"><i class="bi bi-trash3"></i> Remove</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="place-bar">
+          <a href="{{ url_for('shop.products') }}" class="btn btn-light me-auto"><i class="bi bi-arrow-left"></i> Continue shopping</a>
+          <a href="{{ url_for('shop.checkout') }}" class="btn btn-accent btn-xl px-5">Place order</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="sticky-summary">
+        <div class="surface">{% include "shop/_totals.html" %}</div>
+        <div class="d-flex align-items-center gap-2 small text-muted mt-3 px-2"><i class="bi bi-shield-fill-check fs-4"></i> Safe and secure checkout. Cash on delivery available.</div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="surface text-center py-5 px-3">
+    <i class="bi bi-cart-x" style="font-size:4.5rem;color:var(--brand)"></i>
+    <h4 class="fw-800 mt-3">Your cart is empty!</h4>
+    <p class="text-muted">Add items to it now.</p>
+    <a href="{{ url_for('shop.products') }}" class="btn btn-brand btn-lg px-5">Shop now</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="container py-4 py-md-5">
+  <div class="surface auth-card">
+    <div class="auth-side">
+      <h3>Login</h3>
+      <p>Get access to your orders, cart and saved address.</p>
+      <i class="bi bi-bag-heart-fill big-ic"></i>
+    </div>
+    <div class="p-4 p-md-5">
+      <form method="post">
+        {{ csrf_field() }}
+        <div class="form-floating mb-3"><input type="email" name="email" id="email" class="form-control" placeholder="Email" required autofocus value="{{ request.form.email }}"><label for="email">Email address</label></div>
+        <div class="form-floating mb-3"><input type="password" name="password" id="pw" class="form-control" placeholder="Password" required><label for="pw">Password</label></div>
+        <button class="btn btn-accent btn-xl w-100">Login</button>
+      </form>
+      {% if settings.allow_registration %}
+      <div class="text-center mt-4"><a href="{{ url_for('auth.register') }}" class="fw-semibold">New to {{ settings.store_name }}? Create an account</a></div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

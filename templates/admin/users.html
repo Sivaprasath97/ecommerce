@@ -1,0 +1,44 @@
+{% extends "admin/base.html" %}
+{% from "_macros.html" import pagination with context %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<h4 class="mb-3">Users <span class="text-muted fs-6">({{ pager.total }})</span></h4>
+<form class="row g-2 mb-3" method="get">
+  <div class="col-sm-6"><input name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="Search name or email"></div>
+  <div class="col-sm-4"><select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+    <option value="">All roles</option>
+    <option value="customer" {{ 'selected' if role == 'customer' }}>Customers</option>
+    <option value="admin" {{ 'selected' if role == 'admin' }}>Admins</option>
+  </select></div>
+  <div class="col-sm-2"><button class="btn btn-sm btn-outline-secondary w-100">Filter</button></div>
+</form>
+<div class="card border-0 shadow-sm"><div class="table-responsive">
+  <table class="table align-middle mb-0">
+    <thead><tr><th>Name</th><th>Role</th><th>Orders</th><th>Spent</th><th>Joined</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>
+    {% for u in users %}
+    {% set oc = order_counts.get(u._id, {}) %}
+    <tr>
+      <td class="fw-semibold">{{ u.name }}<div class="small text-muted">{{ u.email }}</div></td>
+      <td><span class="badge {{ 'text-bg-dark' if u.role == 'admin' else 'text-bg-light' }} text-capitalize">{{ u.role }}</span></td>
+      <td>{{ oc.n or 0 }}</td>
+      <td>{{ (oc.spent or 0)|money }}</td>
+      <td class="small text-muted">{{ u.created_at|dt('%d %b %Y') }}</td>
+      <td>{% if u.active %}<span class="badge text-bg-success">Active</span>{% else %}<span class="badge text-bg-danger">Disabled</span>{% endif %}</td>
+      <td class="text-end text-nowrap">
+        {% if u._id != g.admin._id %}
+        <form method="post" action="{{ url_for('admin.user_toggle', uid=u._id) }}" class="d-inline">{{ csrf_field() }}
+          <input type="hidden" name="action" value="active">
+          <button class="btn btn-sm {{ 'btn-outline-danger' if u.active else 'btn-outline-success' }}">{{ 'Disable' if u.active else 'Enable' }}</button></form>
+        <form method="post" action="{{ url_for('admin.user_toggle', uid=u._id) }}" class="d-inline" onsubmit="return confirm('Change role for {{ u.name|e }}?')">{{ csrf_field() }}
+          <input type="hidden" name="action" value="role">
+          <button class="btn btn-sm btn-outline-secondary">{{ 'Make customer' if u.role == 'admin' else 'Make admin' }}</button></form>
+        {% else %}<span class="small text-muted">You</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}<tr><td colspan="7" class="text-center text-muted py-4">No users found.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div></div>
+{{ pagination(pager, 'admin.users') }}
+{% endblock %}

@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Online Shopping{% endblock %} | {{ settings.store_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  <style>:root { --brand: {{ settings.primary_color or '#4f46e5' }}; --accent: {{ settings.accent_color or '#f59e0b' }}; }</style>
+</head>
+<body class="d-flex flex-column min-vh-100" id="top">
+
+{% if settings.announcement %}
+<div class="topstrip py-1">
+  <div class="container d-flex justify-content-between align-items-center">
+    <span><i class="bi bi-megaphone-fill me-1" style="color:var(--accent)"></i> {{ settings.announcement }}</span>
+    {% if settings.contact_email %}<a href="mailto:{{ settings.contact_email }}" class="d-none d-md-inline"><i class="bi bi-headset"></i> Customer care</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+
+<header class="site-header">
+  <div class="container py-2">
+    <div class="d-flex align-items-center gap-2 gap-lg-4 flex-wrap flex-lg-nowrap">
+      <a href="{{ url_for('shop.home') }}" class="logo me-auto me-lg-0">
+        <i class="bi bi-bag-heart-fill"></i> {{ settings.store_name }}
+        {% if settings.tagline %}<small class="d-none d-sm-block">{{ settings.tagline|truncate(34, True, '…') }}</small>{% endif %}
+      </a>
+
+      <form class="searchbar order-last order-lg-0 w-100 w-lg-auto" action="{{ url_for('shop.products') }}" role="search">
+        <select name="category" class="d-none d-md-block" aria-label="Category">
+          <option value="">All</option>
+          {% for c in nav_categories %}<option value="{{ c.slug }}" {{ 'selected' if request.args.get('category') == c.slug }}>{{ c.name }}</option>{% endfor %}
+        </select>
+        <input type="search" name="q" placeholder="Search for products, brands and more" value="{{ request.args.get('q', '') }}" aria-label="Search">
+        <button type="submit" aria-label="Search"><i class="bi bi-search"></i></button>
+      </form>
+
+      <div class="d-flex align-items-center gap-1 gap-lg-2">
+        {% if g.user %}
+        <div class="dropdown">
+          <button class="hdr-link dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="bi bi-person-circle"></i>
+            <span class="d-none d-md-block text-start"><small>Hello, {{ g.user.name.split()[0] }}</small><b>Account</b></span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+            <li><a class="dropdown-item py-2" href="{{ url_for('shop.dashboard') }}"><i class="bi bi-person me-2"></i>My Profile</a></li>
+            <li><a class="dropdown-item py-2" href="{{ url_for('shop.orders') }}"><i class="bi bi-box-seam me-2"></i>Orders</a></li>
+            <li><a class="dropdown-item py-2" href="{{ url_for('shop.cart') }}"><i class="bi bi-cart3 me-2"></i>Cart</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><form method="post" action="{{ url_for('auth.logout') }}">{{ csrf_field() }}
+              <button class="dropdown-item py-2 text-danger"><i class="bi bi-power me-2"></i>Logout</button></form></li>
+          </ul>
+        </div>
+        <a href="{{ url_for('shop.orders') }}" class="hdr-link d-none d-lg-flex"><span><small>Track</small><b>Your Orders</b></span></a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-login">Login</a>
+        {% endif %}
+        <a href="{{ url_for('shop.cart') }}" class="hdr-link cart-link">
+          <i class="bi bi-cart3"></i>{% if cart_count %}<span class="cart-count">{{ cart_count }}</span>{% endif %}
+          <b class="d-none d-md-inline">Cart</b>
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+{% if nav_categories %}
+<nav class="catstrip">
+  <div class="container"><div class="scroller">
+    <a href="{{ url_for('shop.products') }}" class="{{ 'active' if request.endpoint == 'shop.products' and not request.args.get('category') }}"><span class="ic"><i class="bi bi-grid-3x3-gap"></i></span>All</a>
+    {% for c in nav_categories %}
+    <a href="{{ url_for('shop.products', category=c.slug) }}" class="{{ 'active' if request.args.get('category') == c.slug }}"><span class="ic"><i class="bi bi-{{ c.icon or 'grid' }}"></i></span>{{ c.name }}</a>
+    {% endfor %}
+  </div></div>
+</nav>
+{% endif %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="flash-stack">
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ 'info' if cat == 'message' else cat }} alert-dismissible fade show" role="alert">
+    {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+<main class="flex-grow-1 pb-4">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer mt-4">
+  <a href="#top" class="back-top">Back to top <i class="bi bi-arrow-up"></i></a>
+  <div class="container py-5">
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="h4 fw-800 text-white mb-2"><i class="bi bi-bag-heart-fill" style="color:var(--accent)"></i> {{ settings.store_name }}</div>
+        <p class="mb-3">{{ settings.tagline }}</p>
+        {% if settings.contact_email %}<p class="mb-0"><i class="bi bi-envelope me-1"></i> {{ settings.contact_email }}</p>{% endif %}
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Shop</h6>
+        <a href="{{ url_for('shop.products') }}">All products</a>
+        {% for c in nav_categories[:5] %}<a href="{{ url_for('shop.products', category=c.slug) }}">{{ c.name }}</a>{% endfor %}
+      </div>
+      <div class="col-6 col-lg-2">
+        <h6>Account</h6>
+        {% if g.user %}
+        <a href="{{ url_for('shop.dashboard') }}">My profile</a>
+        <a href="{{ url_for('shop.orders') }}">My orders</a>
+        {% else %}
+        <a href="{{ url_for('auth.login') }}">Login</a>
+        {% if settings.allow_registration %}<a href="{{ url_for('auth.register') }}">Create account</a>{% endif %}
+        {% endif %}
+        <a href="{{ url_for('shop.cart') }}">Cart</a>
+      </div>
+      <div class="col-lg-4">
+        <h6>Why shop with us</h6>
+        <p class="mb-1"><i class="bi bi-truck me-2" style="color:var(--accent)"></i>{% if settings.free_shipping_over|float > 0 %}Free delivery over {{ settings.free_shipping_over|money }}{% else %}Fast delivery{% endif %}</p>
+        <p class="mb-1"><i class="bi bi-cash-coin me-2" style="color:var(--accent)"></i>Cash on delivery available</p>
+        <p class="mb-0"><i class="bi bi-shield-check me-2" style="color:var(--accent)"></i>Secure checkout</p>
+      </div>
+    </div>
+  </div>
+  <div class="bottom py-3"><div class="container small text-center">{{ settings.footer_text }}</div></div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // auto-dismiss flash toasts
+  setTimeout(() => document.querySelectorAll('.flash-stack .alert').forEach(a => bootstrap.Alert.getOrCreateInstance(a).close()), 5000);
+  // horizontal product rails
+  document.querySelectorAll('.rail-wrap').forEach(w => {
+    const r = w.querySelector('.rail');
+    w.querySelectorAll('.rail-btn').forEach(b => b.addEventListener('click', () =>
+      r.scrollBy({ left: (b.classList.contains('next') ? 1 : -1) * r.clientWidth * .85 })));
+  });
+  // quantity steppers
+  document.querySelectorAll('.qty-stepper').forEach(s => {
+    const i = s.querySelector('input');
+    s.querySelectorAll('button[data-step]').forEach(b => b.addEventListener('click', e => {
+      e.preventDefault();
+      const v = Math.min(Math.max((+i.value || 1) + (+b.dataset.step), +(i.min || 0)), +(i.max || 999));
+      if (v !== +i.value) { i.value = v; i.dispatchEvent(new Event('change')); }
+    }));
+  });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

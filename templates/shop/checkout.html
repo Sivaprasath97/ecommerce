@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Checkout{% endblock %}
+{% block content %}
+{% set item_count = lines|sum(attribute='qty') %}
+<div class="container pt-3">
+  <div class="steps mb-3 d-none d-md-flex">
+    <div class="st done"><span class="n"><i class="bi bi-check"></i></span> Login <span class="ms-auto small text-muted fw-normal">{{ g.user.email }}</span></div>
+    <div class="st cur"><span class="n">2</span> Delivery address</div>
+    <div class="st"><span class="n">3</span> Order summary</div>
+    <div class="st"><span class="n">4</span> Payment</div>
+  </div>
+
+  <form method="post" class="row g-3">
+    {{ csrf_field() }}
+    <div class="col-lg-8">
+      <div class="surface mb-3">
+        <div class="px-4 py-3 border-bottom d-flex align-items-center gap-2"><span class="badge bg-brand">2</span><h2 class="h6 fw-800 mb-0 text-uppercase">Delivery address</h2></div>
+        <div class="p-4 row g-3">
+          <div class="col-md-6"><label class="form-label small fw-semibold">Full name *</label><input name="full_name" class="form-control" required value="{{ address.full_name }}"></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">Mobile number *</label><input name="phone" class="form-control" required value="{{ address.phone }}"></div>
+          <div class="col-12"><label class="form-label small fw-semibold">Address (house no, building, street) *</label><input name="line1" class="form-control" required value="{{ address.line1 }}"></div>
+          <div class="col-12"><label class="form-label small fw-semibold">Locality / landmark</label><input name="line2" class="form-control" value="{{ address.line2 }}"></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">City *</label><input name="city" class="form-control" required value="{{ address.city }}"></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">State *</label><input name="state" class="form-control" required value="{{ address.state }}"></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">PIN / ZIP code *</label><input name="zip" class="form-control" required value="{{ address.zip }}"></div>
+          <div class="col-md-6"><label class="form-label small fw-semibold">Country *</label><input name="country" class="form-control" required value="{{ address.country }}"></div>
+          <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" name="save_address" id="save" checked><label class="form-check-label small" for="save">Save this address for future orders</label></div></div>
+        </div>
+      </div>
+
+      <div class="surface mb-3">
+        <div class="px-4 py-3 border-bottom d-flex align-items-center gap-2"><span class="badge bg-brand">3</span><h2 class="h6 fw-800 mb-0 text-uppercase">Order summary</h2></div>
+        {% for l in lines %}
+        <div class="cart-item py-3">
+          <div class="thumb" style="width:72px;height:72px"><img src="{{ l.product.image_url }}" alt=""></div>
+          <div class="flex-grow-1"><div class="fw-semibold">{{ l.product.name }}</div><div class="small text-muted">Qty {{ l.qty }} &times; {{ l.product.price|money }}</div></div>
+          <div class="fw-800">{{ l.subtotal|money }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="surface">
+        <div class="px-4 py-3 border-bottom d-flex align-items-center gap-2"><span class="badge bg-brand">4</span><h2 class="h6 fw-800 mb-0 text-uppercase">Payment options</h2></div>
+        <div class="p-4">
+          <label class="pay-opt mb-3"><input class="form-check-input mt-0" type="radio" name="payment_method" value="cod" checked>
+            <i class="bi bi-cash-stack fs-4 brand-text"></i><span><b class="d-block">Cash on Delivery</b><span class="small text-muted">Pay in cash when your order is delivered</span></span></label>
+          <label class="form-label small fw-semibold">Delivery instructions (optional)</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="e.g. leave with the security guard"></textarea>
+        </div>
+        <div class="place-bar">
+          <span class="me-auto align-self-center small text-muted">By placing your order you agree to our terms.</span>
+          <button class="btn btn-accent btn-xl px-5">Confirm order &middot; {{ totals.total|money }}</button>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="sticky-summary">
+        <div class="surface">{% include "shop/_totals.html" %}</div>
+        <a href="{{ url_for('shop.cart') }}" class="btn btn-link w-100 mt-2"><i class="bi bi-pencil"></i> Edit cart</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

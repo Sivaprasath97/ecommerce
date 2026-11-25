@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if product._id else 'New' }} product{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ 'Edit product' if product._id else 'New product' }}</h4>
+<form method="post" enctype="multipart/form-data" class="row g-4">
+  {{ csrf_field() }}
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm"><div class="card-body row g-3">
+      <div class="col-12"><label class="form-label">Name *</label><input name="name" class="form-control" required value="{{ product.name }}"></div>
+      <div class="col-12"><label class="form-label">Description</label><textarea name="description" rows="5" class="form-control">{{ product.description }}</textarea></div>
+      <div class="col-md-3"><label class="form-label">Selling price *</label><input type="number" step="0.01" min="0" name="price" id="price" class="form-control" required value="{{ product.price }}"></div>
+      <div class="col-md-3"><label class="form-label">MRP <span class="small text-muted">(optional)</span></label><input type="number" step="0.01" min="0" name="mrp" id="mrp" class="form-control" value="{{ product.mrp or '' }}">
+        <div class="form-text" id="offHint"></div></div>
+      <div class="col-md-2"><label class="form-label">Stock *</label><input type="number" min="0" name="stock" class="form-control" required value="{{ product.stock }}"></div>
+      <div class="col-md-4"><label class="form-label">Category</label>
+        <select name="category_id" class="form-select">
+          <option value="">— None —</option>
+          {% for c in categories %}<option value="{{ c._id }}" {{ 'selected' if product.category_id == c._id }}>{{ c.name }}{{ '' if c.active else ' (hidden)' }}</option>{% endfor %}
+        </select></div>
+    </div></div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+      <h6>Image</h6>
+      <img id="preview" src="{{ product.image_url or 'https://placehold.co/600x450?text=No+Image' }}" class="img-fluid rounded mb-2" alt="">
+      <label class="form-label small">Image URL</label>
+      <input name="image_url" class="form-control form-control-sm mb-2" value="{{ product.image_url }}" oninput="document.getElementById('preview').src=this.value">
+      <label class="form-label small">…or upload a file</label>
+      <input type="file" name="image_file" accept="image/*" class="form-control form-control-sm">
+    </div></div>
+    <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+      <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="active" id="active" {{ 'checked' if product.active }}><label class="form-check-label" for="active">Active (visible in store)</label></div>
+      <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="featured" id="featured" {{ 'checked' if product.featured }}><label class="form-check-label" for="featured">Featured on home page</label></div>
+    </div></div>
+    <button class="btn btn-brand w-100">Save product</button>
+    <a href="{{ url_for('admin.products') }}" class="btn btn-link w-100">Cancel</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script>
+  const pr = document.getElementById('price'), mrp = document.getElementById('mrp'), hint = document.getElementById('offHint');
+  const upd = () => { const p = +pr.value, m = +mrp.value;
+    hint.textContent = m > p && p > 0 ? `Shows as ${Math.round((m - p) / m * 100)}% off in the store` : (m ? 'MRP must be higher than price to show a discount' : ''); };
+  pr.oninput = mrp.oninput = upd; upd();
+</script>
+{% endblock %}

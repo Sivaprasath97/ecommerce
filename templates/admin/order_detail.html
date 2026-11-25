@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div><h4 class="mb-0">Order {{ order.order_number }} {{ status_badge(order.status) }}</h4>
+    <div class="small text-muted">Placed {{ order.created_at|dt }} by {{ order.user_name }} ({{ order.user_email }})</div></div>
+  <a href="{{ url_for('admin.orders') }}" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm"><div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Product</th><th>Price</th><th>Qty</th><th class="text-end">Subtotal</th></tr></thead>
+        <tbody>
+        {% for it in order['items'] %}
+        <tr><td><img src="{{ it.image_url }}" width="40" height="40" class="rounded object-fit-cover me-2" alt="">{{ it.name }}</td>
+          <td>{{ it.price|money }}</td><td>{{ it.qty }}</td><td class="text-end">{{ it.subtotal|money }}</td></tr>
+        {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3" class="text-end">Subtotal</td><td class="text-end">{{ order.subtotal|money }}</td></tr>
+          <tr><td colspan="3" class="text-end">Shipping</td><td class="text-end">{{ order.shipping|money }}</td></tr>
+          <tr><td colspan="3" class="text-end">Tax</td><td class="text-end">{{ order.tax|money }}</td></tr>
+          <tr class="fw-bold"><td colspan="3" class="text-end">Total</td><td class="text-end">{{ order.total|money }}</td></tr>
+        </tfoot>
+      </table>
+    </div></div>
+    {% if order.notes %}<div class="card border-0 shadow-sm mt-3"><div class="card-body"><h6>Customer notes</h6>{{ order.notes }}</div></div>{% endif %}
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm mb-3"><div class="card-body">
+      <h6>Update status</h6>
+      {% if order.status == 'cancelled' %}
+        <p class="small text-muted mb-0">This order is cancelled and can no longer be changed.</p>
+      {% else %}
+      <form method="post">{{ csrf_field() }}
+        <select name="status" class="form-select mb-2 text-capitalize">
+          {% for s in ORDER_STATUSES %}<option value="{{ s }}" {{ 'selected' if order.status == s }}>{{ s }}</option>{% endfor %}
+        </select>
+        <input name="note" class="form-control mb-2" placeholder="Note for customer (optional, e.g. tracking #)">
+        <button class="btn btn-brand w-100" onclick="return this.form.status.value !== 'cancelled' || confirm('Cancel order and restock items?')">Update</button>
+      </form>
+      {% endif %}
+    </div></div>
+    <div class="card border-0 shadow-sm mb-3"><div class="card-body small">
+      <h6>Shipping address</h6>
+      {{ order.address.full_name }}<br>{{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %}<br>
+      {{ order.address.city }}, {{ order.address.state }} {{ order.address.zip }}<br>{{ order.address.country }}<br><i class="bi bi-telephone"></i> {{ order.address.phone }}
+      <h6 class="mt-3">Payment</h6>{{ 'Cash on delivery' if order.payment_method == 'cod' else order.payment_method }}
+    </div></div>
+    <div class="card border-0 shadow-sm"><div class="card-body">
+      <h6>History</h6>
+      <ul class="list-unstyled small mb-0">
+        {% for h in order.status_history|reverse %}
+        <li class="mb-2">{{ status_badge(h.status) }} <span class="text-muted">{{ h.at|dt }} &middot; {{ h.by }}</span>{% if h.note %}<div>{{ h.note }}</div>{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div></div>
+  </div>
+</div>
+{% endblock %}

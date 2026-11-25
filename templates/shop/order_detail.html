@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% from "_macros.html" import status_badge %}
+{% block title %}Order {{ order.order_number }}{% endblock %}
+{% block content %}
+{% set steps = [('pending', 'Ordered', 'bag-check'), ('processing', 'Packed', 'box-seam'), ('shipped', 'Shipped', 'truck'), ('delivered', 'Delivered', 'house-check')] %}
+{% set keys = steps|map(attribute=0)|list %}
+{% set item_count = order['items']|sum(attribute='qty') %}
+<div class="container pt-3">
+  <nav class="small mb-2 text-muted"><a href="{{ url_for('shop.dashboard') }}">My Account</a> <i class="bi bi-chevron-right small"></i>
+    <a href="{{ url_for('shop.orders') }}">My Orders</a> <i class="bi bi-chevron-right small"></i> {{ order.order_number }}</nav>
+
+  <div class="surface p-4 mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+      <div>
+        <h1 class="h5 fw-800 mb-1">Order {{ order.order_number }}</h1>
+        <div class="small text-muted">Placed on {{ order.created_at|dt }} &middot; {{ item_count }} item(s)</div>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        {{ status_badge(order.status) }}
+        {% if order.status == 'pending' %}
+        <form method="post" action="{{ url_for('shop.order_cancel', order_id=order._id) }}" onsubmit="return confirm('Cancel this order?')">
+          {{ csrf_field() }}<button class="btn btn-sm btn-outline-danger">Cancel order</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    {% if order.status != 'cancelled' %}
+    {% set current = keys.index(order.status) %}
+    <div class="tracker d-flex mt-4">
+      {% for key, label, icon in steps %}
+      <div class="step flex-fill text-center {{ 'done' if loop.index0 <= current }}">
+        <div class="dot mx-auto"></div>
+        <div class="small mt-2"><i class="bi bi-{{ icon }}"></i> {{ label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-danger mt-3 mb-0"><i class="bi bi-x-circle"></i> This order was cancelled. Any items have been returned to stock.</div>
+    {% endif %}
+  </div>
+
+  <div class="row g-3">
+    <div class="col-lg-8">
+      <div class="surface">
+        {% for it in order['items'] %}
+        <div class="cart-item">
+          <div class="thumb" style="width:80px;height:80px"><img src="{{ it.image_url }}" alt=""></div>
+          <div class="flex-grow-1"><div class="fw-semibold">{{ it.name }}</div><div class="small text-muted">{{ it.price|money }} &times; {{ it.qty }}</div></div>
+          <div class="fw-800">{{ it.subtotal|money }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="surface p-4 mt-3">
+        <h2 class="h6 fw-800">Order updates</h2>
+        <ul class="list-unstyled small mb-0">
+          {% for h in order.status_history|reverse %}
+          <li class="d-flex gap-3 py-2 {{ 'border-top' if not loop.first }}">
+            <div>{{ status_badge(h.status) }}</div>
+            <div><div class="text-muted">{{ h.at|dt }}</div>{% if h.note %}<div class="fw-semibold">{{ h.note }}</div>{% endif %}</div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="surface p-4 mb-3">
+        <h2 class="h6 fw-800">Delivery address</h2>
+        <div class="fw-semibold">{{ order.address.full_name }}</div>
+        <div class="small">{{ order.address.line1 }}{% if order.address.line2 %}, {{ order.address.line2 }}{% endif %}<br>
+          {{ order.address.city }}, {{ order.address.state }} {{ order.address.zip }}, {{ order.address.country }}</div>
+        <div class="small mt-2"><b>Phone:</b> {{ order.address.phone }}</div>
+        <h2 class="h6 fw-800 mt-3">Payment</h2><div class="small">{{ 'Cash on Delivery' if order.payment_method == 'cod' else order.payment_method }}</div>
+        {% if order.notes %}<h2 class="h6 fw-800 mt-3">Delivery instructions</h2><div class="small">{{ order.notes }}</div>{% endif %}
+      </div>
+      <div class="surface">{% set totals = order %}{% include "shop/_totals.html" %}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container pt-3">
+
+  {# ---------- hero slider (Admin → Banners) ---------- #}
+  {% if banners %}
+  <div id="hero" class="carousel slide hero-slider surface overflow-hidden mb-3" data-bs-ride="carousel" data-bs-interval="4500">
+    <div class="carousel-indicators">
+      {% for b in banners %}<button type="button" data-bs-target="#hero" data-bs-slide-to="{{ loop.index0 }}" class="{{ 'active' if loop.first }}" aria-label="Slide {{ loop.index }}"></button>{% endfor %}
+    </div>
+    <div class="carousel-inner">
+      {% for b in banners %}
+      <div class="carousel-item {{ 'active' if loop.first }}" style="background-image:url('{{ b.image_url }}')">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          {% if b.title %}<h2>{{ b.title }}</h2>{% endif %}
+          {% if b.subtitle %}<p class="lead mb-3">{{ b.subtitle }}</p>{% endif %}
+          {% if b.button_text %}<div><a href="{{ b.link }}" class="btn btn-accent btn-lg px-4">{{ b.button_text }} <i class="bi bi-arrow-right"></i></a></div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% if banners|length > 1 %}
+    <button class="carousel-control-prev" type="button" data-bs-target="#hero" data-bs-slide="prev"><span class="carousel-control-prev-icon"></span></button>
+    <button class="carousel-control-next" type="button" data-bs-target="#hero" data-bs-slide="next"><span class="carousel-control-next-icon"></span></button>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="hero-slider surface overflow-hidden mb-3"><div class="carousel-item active position-relative d-block" style="background-image:url('{{ settings.banner_image }}')">
+    <div class="slide-overlay"></div>
+    <div class="slide-content"><h2>{{ settings.banner_title }}</h2><p class="lead mb-3">{{ settings.banner_subtitle }}</p>
+      <div><a href="{{ url_for('shop.products') }}" class="btn btn-accent btn-lg px-4">Shop now <i class="bi bi-arrow-right"></i></a></div></div>
+  </div></div>
+  {% endif %}
+
+  {# ---------- trust strip ---------- #}
+  <div class="surface trust mb-3">
+    <div class="row g-0 row-cols-2 row-cols-lg-4">
+      <div class="col item"><i class="bi bi-truck"></i><div><b>{% if settings.free_shipping_over|float > 0 %}Free delivery{% else %}Fast delivery{% endif %}</b><span>{% if settings.free_shipping_over|float > 0 %}On orders over {{ settings.free_shipping_over|money }}{% else %}Shipped quickly to your door{% endif %}</span></div></div>
+      <div class="col item"><i class="bi bi-cash-coin"></i><div><b>Cash on delivery</b><span>Pay when your order arrives</span></div></div>
+      <div class="col item"><i class="bi bi-shield-check"></i><div><b>Secure checkout</b><span>Your data stays protected</span></div></div>
+      <div class="col item"><i class="bi bi-headset"></i><div><b>Customer support</b><span>{{ settings.contact_email or 'We are here to help' }}</span></div></div>
+    </div>
+  </div>
+
+  {# ---------- deals ---------- #}
+  {% if deals %}
+    {% set rail_items = deals %}{% set rail_title = "Deals of the Day" %}
+    {% set rail_sub = '<i class="bi bi-lightning-charge-fill"></i> Biggest discounts in the store right now' %}
+    {% set rail_link = url_for('shop.products', sort='discount') %}{% set rail_head_class = 'deals-head' %}
+    {% include "shop/_rail.html" %}
+  {% endif %}
+
+  {# ---------- categories ---------- #}
+  {% if categories %}
+  <section class="mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2 px-1"><h5 class="fw-800 mb-0">Shop by Category</h5></div>
+    <div class="row g-2 g-md-3 row-cols-3 row-cols-md-4 row-cols-lg-6">
+      {% for c in categories %}
+      <div class="col"><a href="{{ url_for('shop.products', category=c.slug) }}" class="cat-tile">
+        <span class="ic"><i class="bi bi-{{ c.icon or 'grid' }}"></i></span><b>{{ c.name }}</b>
+      </a></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if featured %}
+    {% set rail_items = featured %}{% set rail_title = "Bestsellers" %}{% set rail_sub = "Hand-picked favourites from our store" %}
+    {% set rail_link = url_for('shop.products') %}{% set rail_head_class = '' %}
+    {% include "shop/_rail.html" %}
+  {% endif %}
+
+  {% for c, items in rows %}
+    {% set rail_items = items %}{% set rail_title = "Best of " ~ c.name %}{% set rail_sub = c.description %}
+    {% set rail_link = url_for('shop.products', category=c.slug) %}{% set rail_head_class = '' %}
+    {% include "shop/_rail.html" %}
+  {% endfor %}
+
+  {% if latest %}
+  <section class="shelf">
+    <div class="shelf-head"><div><h5>New Arrivals</h5><div class="sub">Fresh additions to the store</div></div>
+      <a href="{{ url_for('shop.products', sort='newest') }}" class="view-all"><i class="bi bi-chevron-right"></i></a></div>
+    <div class="p-3"><div class="row g-3 row-cols-2 row-cols-md-3 row-cols-lg-5 grid-tiles">
+      {% for p in latest %}<div class="col">{% include "shop/_product_card.html" %}</div>{% endfor %}
+    </div></div>
+  </section>
+  {% else %}
+  <div class="surface p-5 text-center text-muted">No products yet.</div>
+  {% endif %}
+</div>
+{% endblock %}

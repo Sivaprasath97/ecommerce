@@ -1,0 +1,18 @@
+{% extends "admin/base.html" %}
+{% block title %}Edit banner{% endblock %}
+{% block content %}
+<h4 class="mb-3">Edit banner</h4>
+<div class="row g-4">
+  <div class="col-lg-5"><div class="card border-0 shadow-sm"><div class="card-body">
+    {% include "admin/_banner_fields.html" %}
+    <a href="{{ url_for('admin.banners') }}" class="btn btn-link w-100">Cancel</a>
+  </div></div></div>
+  <div class="col-lg-7"><div class="card border-0 shadow-sm overflow-hidden">
+    <div style="height:260px;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,0)),url('{{ banner.image_url }}') center/cover" class="d-flex flex-column justify-content-center p-4 text-white">
+      <h3 class="fw-bold">{{ banner.title }}</h3><p>{{ banner.subtitle }}</p>
+      {% if banner.button_text %}<div><span class="btn btn-warning">{{ banner.button_text }}</span></div>{% endif %}
+    </div>
+    <div class="card-body small text-muted">Preview of the current saved banner</div>
+  </div></div>
+</div>
+{% endblock %}
