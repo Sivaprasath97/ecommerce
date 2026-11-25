@@ -1,12 +1,11 @@
 import math
-import os
 import re
 import secrets
-import uuid
+from datetime import datetime
 from functools import wraps
 from urllib.parse import urlparse
 
-from bson import ObjectId
+from bson import Binary, ObjectId
 from bson.errors import InvalidId
 from flask import abort, current_app, flash, g, redirect, request, session, url_for
 from werkzeug.utils import secure_filename
@@ -96,17 +95,34 @@ def safe_next(target, fallback):
     return fallback
 
 
+IMAGE_MIME = {"png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+              "gif": "image/gif", "webp": "image/webp"}
+
+
 def save_image(file_storage):
-    """Save an uploaded image to static/uploads and return its URL, or None."""
+    """Store an uploaded image in MongoDB and return its URL, or None.
+
+    Images live in the database (not on disk) so uploads work on serverless
+    hosts like Vercel, whose filesystem is read-only.
+    """
+    from db import mongo  # local import avoids a circular import at startup
+
     if not file_storage or not file_storage.filename:
         return None
     ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else ""
-    if ext not in current_app.config["ALLOWED_IMAGE_EXT"]:
+    if ext not in IMAGE_MIME:
         flash("Unsupported image type. Use png, jpg, jpeg, gif or webp.", "danger")
         return None
-    name = f"{uuid.uuid4().hex}_{secure_filename(file_storage.filename)}"
-    file_storage.save(os.path.join(current_app.config["UPLOAD_FOLDER"], name))
-    return url_for("static", filename=f"uploads/{name}")
+    data = file_storage.read()
+    if len(data) > current_app.config["MAX_IMAGE_BYTES"]:
+        flash("Image is too large (max 4 MB).", "danger")
+        return None
+    res = mongo.db.images.insert_one({
+        "data": Binary(data), "content_type": IMAGE_MIME[ext],
+        "filename": secure_filename(file_storage.filename), "size": len(data),
+        "created_at": datetime.utcnow(),
+    })
+    return url_for("shop.image", image_id=str(res.inserted_id))
 
 
 class Pagination:

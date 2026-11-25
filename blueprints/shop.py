@@ -2,7 +2,8 @@ import re
 import secrets
 from datetime import datetime
 
-from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
+from flask import (Blueprint, Response, abort, flash, g, redirect, render_template, request,
+                   url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from db import mongo
@@ -113,6 +114,18 @@ def product_detail(slug):
         "_id": {"$ne": product["_id"]}}).limit(4))
     return render_template("shop/product_detail.html", product=product,
                            category=category, related=related)
+
+
+@bp.route("/img/<image_id>")
+def image(image_id):
+    """Serve an image uploaded through the admin panel (stored in MongoDB)."""
+    doc = mongo.db.images.find_one({"_id": oid(image_id)})
+    if not doc:
+        abort(404)
+    resp = Response(bytes(doc["data"]), mimetype=doc["content_type"])
+    resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    resp.headers["X-Content-Type-Options"] = "nosniff"
+    return resp
 
 
 # -------------------------------------------------------------------- cart

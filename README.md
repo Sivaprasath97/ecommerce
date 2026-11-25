@@ -56,6 +56,15 @@ static/              CSS and uploaded images
 
 `users`, `products`, `categories`, `carts`, `orders`, `settings`
 
+## Deploy to Vercel
+
+The repo includes a `vercel.json` that runs `app.py` with Vercel's Python runtime. Uploaded images are stored in MongoDB (the `images` collection), because Vercel's filesystem is read-only.
+
+1. Import the GitHub repo in Vercel and leave **Framework Preset** set to **Other**.
+2. Add these **Environment Variables**: `MONGO_URI`, `MONGO_DB`, `SECRET_KEY`, `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+3. In Atlas **Network Access**, allow `0.0.0.0/0`, because Vercel does not use fixed IP addresses.
+4. Deploy.
+
 ## Production notes
 
 - Change `SECRET_KEY` and the admin password, and use a strong Atlas database password.
